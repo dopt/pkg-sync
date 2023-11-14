@@ -1,6 +1,6 @@
 ## @dopt/pkg-sync
 
-A CLI for mirroring code from a package in a monorepo to another repository.
+A CLI for mirroring code from a package in a monorepo to another repository
 
 ### Install
 

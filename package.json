@@ -1,6 +1,6 @@
 {
   "name": "@dopt/pkg-sync",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "",
   "homepage": "https://github.com/dopt/pkg-sync",
   "repository": {
@@ -30,7 +30,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "☝️ required package scripts": "",
-    "prepublishOnly": "pnpm -w exec turbo run build --filter=\"@dopt/pkg-rsync\"",
+    "prepublishOnly": "pnpm -w exec turbo run build --filter=\"@dopt/pkg-sync\"",
     "postpublish": "./cli.js"
   },
   "files": [
@@ -38,7 +38,7 @@
     "dist"
   ],
   "dependencies": {
-    "@dopt/resolve-workspace-dependencies": "0.0.0",
+    "@dopt/resolve-workspace-dependencies": "1.0.0",
     "@octokit/rest": "20.0.2",
     "citty": "0.1.2"
   },
