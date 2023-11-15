@@ -29,8 +29,3 @@ jobs:
       - name: Build
         run: |
           pnpm build
-
-      - name: Update lockfile 
-        run: |
-          git add pnpm-lock.yaml;
-          git commit --amend --no-edit;
