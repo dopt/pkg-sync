@@ -1,5 +1,11 @@
 # @dopt/pkg-sync
 
+## 1.1.3
+
+### Patch Changes
+
+- 46ae6c245: The CLI creates a lockfile for the package.
+
 ## 1.1.2
 
 ### Patch Changes

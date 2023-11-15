@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import { readFile } from 'fs/promises';
 
+import { makeDedicatedLockfile } from '@pnpm/make-dedicated-lockfile';
+
 import { resolveWorkspaceDependencies } from '@dopt/resolve-workspace-dependencies';
 
 import { TOPOFTREE } from '@dopt/topoftree';
@@ -85,6 +87,22 @@ export async function sync() {
     } catch (e) {
       console.log(`Error while creating file blob for file ${filePath}`, e);
     }
+  }
+
+  // ::SPECIAL CASE::
+  // Create a lockfile for this package
+  try {
+    await makeDedicatedLockfile(TOPOFTREE, process.cwd());
+    filePaths.push('pnpm-lock.yaml');
+    const { data: lockfile } = await octokit.git.createBlob({
+      owner,
+      repo,
+      content: await readFile(path.resolve('pnpm-lock.yaml'), 'utf8'),
+      encoding: 'utf8',
+    });
+    fileBlobs.push(lockfile);
+  } catch (e) {
+    console.warn('Error while create a dedicated lockfile for this package', e);
   }
 
   // ::SPECIAL CASE::
