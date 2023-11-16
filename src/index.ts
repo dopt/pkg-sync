@@ -16,6 +16,7 @@ import { exec as execAsync } from 'node:child_process';
 const exec = promisify(execAsync);
 
 import { name, version, repository } from '../package.json';
+import { initialize } from './repo';
 
 export async function sync() {
   const octokit = new Octokit({
@@ -49,7 +50,11 @@ export async function sync() {
   );
 
   if (!targetRepo) {
-    await octokit.repos.createInOrg({ org, name: repo, auto_init: true });
+    await initialize({
+      owner,
+      org,
+      repo,
+    });
   }
 
   const { data: ref } = await octokit.git.getRef({

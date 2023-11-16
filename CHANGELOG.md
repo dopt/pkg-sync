@@ -1,5 +1,11 @@
 # @dopt/pkg-sync
 
+## 1.1.6
+
+### Patch Changes
+
+- f1e8d9a3e: Add logic to properly scaffold out repos upon initialization.
+
 ## 1.1.5
 
 ### Patch Changes
