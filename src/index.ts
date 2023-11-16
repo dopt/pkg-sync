@@ -9,6 +9,8 @@ import { resolveWorkspaceDependencies } from '@dopt/resolve-workspace-dependenci
 
 import { TOPOFTREE } from '@dopt/topoftree';
 
+import micromatch from 'micromatch';
+
 import { promisify } from 'node:util';
 import { exec as execAsync } from 'node:child_process';
 const exec = promisify(execAsync);
@@ -50,10 +52,57 @@ export async function sync() {
     await octokit.repos.createInOrg({ org, name: repo, auto_init: true });
   }
 
+  const { data: ref } = await octokit.git.getRef({
+    owner,
+    repo,
+    ref: `heads/main`,
+  });
+
+  // Get the tree for the current SHA.
+  const {
+    data: { tree },
+  } = await octokit.git.getTree({
+    owner,
+    repo,
+    tree_sha: ref.object.sha,
+    recursive: 'true',
+  });
+
+  const syncignore = tree.find(({ path }) => {
+    return (path as string) === '.syncignore';
+  });
+
+  if (!syncignore) {
+    throw new Error('No syncignore found in target repo');
+  }
+
+  const {
+    data: { content: syncIgnoreFile },
+  } = await octokit.git.getBlob({
+    owner,
+    repo,
+    file_sha: syncignore?.sha as string,
+  });
+
   // Get all the files tracked by git
   const filePaths = (await exec('git ls-files .')).stdout
     .split('\n')
     .filter((f) => f);
+
+  const ignorePatterns: string[] = atob(syncIgnoreFile)
+    .split('\n')
+    .filter((line) => line);
+
+  // Mark files the following files for deletion if either
+  // - The file is not ignored by the target repo's .syncignore
+  // - The file is  present in target but not source
+  const filesToDelete = tree
+    .filter(({ mode }) => {
+      // filter out directories
+      return mode !== '040000';
+    })
+    .filter(({ path }) => !filePaths.includes(path as string))
+    .filter(({ path }) => !micromatch.isMatch(path as string, ignorePatterns));
 
   // Resolve workspace dependencies to their current version
   await resolveWorkspaceDependencies(name);
@@ -61,7 +110,7 @@ export async function sync() {
   // ::SPECIAL CASE::
   // Copy the monorepos top-level package.json's
   // packageManager field to ensure consistent builds
-  // downstream
+  // in target repo
   try {
     const { packageManager } = JSON.parse(
       await readFile(path.join(TOPOFTREE, 'package.json'), 'utf8')
@@ -87,6 +136,16 @@ export async function sync() {
     } catch (e) {
       console.log(`Error while creating file blob for file ${filePath}`, e);
     }
+  }
+
+  // ::SPECIAL CASE::
+  // Add deletions as blobs w/ null SHAs
+  for (const fileToDelete of filesToDelete) {
+    fileBlobs.push({
+      url: fileToDelete.url as string,
+      sha: null,
+    });
+    filePaths.push(fileToDelete.path as string);
   }
 
   // ::SPECIAL CASE::
@@ -121,19 +180,13 @@ export async function sync() {
     console.warn("Ran into issues while porting the monorepo's .nvmrc file", e);
   }
 
-  const { data: ref } = await octokit.git.getRef({
-    owner,
-    repo,
-    ref: `heads/main`,
-  });
-
   const { data: commit } = await octokit.git.getCommit({
     owner,
     repo,
     commit_sha: ref.object.sha,
   });
 
-  const { data: tree } = await octokit.git.createTree({
+  const { data: newTree } = await octokit.git.createTree({
     owner,
     repo,
     tree: fileBlobs.map(({ sha }, index) => ({
@@ -149,7 +202,7 @@ export async function sync() {
     owner,
     repo,
     message: `Release ${version}`,
-    tree: tree.sha,
+    tree: newTree.sha,
     parents: [ref.object.sha],
   });
 
@@ -160,10 +213,12 @@ export async function sync() {
     sha: newCommit.sha,
   });
 
+  /*
   await octokit.repos.createRelease({
     owner,
     repo,
     tag_name: `v${version}`,
     target_commitish: newCommit.sha,
   });
+  */
 }

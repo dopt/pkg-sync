@@ -1,11 +1,5 @@
 # @dopt/pkg-sync
 
-## 1.1.4
-
-### Patch Changes
-
-- b0ca01139: Simplify dependencies / remove unneeded configuration.
-
 ## 1.1.3
 
 ### Patch Changes
