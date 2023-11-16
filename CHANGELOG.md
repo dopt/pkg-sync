@@ -1,5 +1,17 @@
 # @dopt/pkg-sync
 
+## 1.1.5
+
+### Patch Changes
+
+- c4b859b8e: Sync deletd files + respect a .syncignore in target repo.
+
+## 1.1.4
+
+### Patch Changes
+
+- b0ca01139: Simplify dependencies / remove unneeded configuration.
+
 ## 1.1.3
 
 ### Patch Changes

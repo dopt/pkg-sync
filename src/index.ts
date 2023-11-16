@@ -213,12 +213,10 @@ export async function sync() {
     sha: newCommit.sha,
   });
 
-  /*
   await octokit.repos.createRelease({
     owner,
     repo,
     tag_name: `v${version}`,
     target_commitish: newCommit.sha,
   });
-  */
 }
